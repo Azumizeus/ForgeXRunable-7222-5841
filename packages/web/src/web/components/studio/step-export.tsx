@@ -82,6 +82,14 @@ export function StepExport({ data, onBack }: { data: StudioData; onBack: () => v
   const s = status.data;
   const pct = s && s.total ? Math.round((s.progress / s.total) * 100) : 0;
   const remaining = usage.data?.exports.remaining;
+  const short =
+    remaining !== undefined && remaining < gen.generated
+      ? tr(
+          `Quota d'export insuffisant : ${fmt(gen.generated)} NFT à exporter, ${fmt(remaining)} restants ce mois-ci.`,
+          `Not enough export quota: ${fmt(gen.generated)} NFT to export, ${fmt(remaining)} left this month.`,
+        )
+      : null;
+  const quotaMsg = quota ?? short;
 
   return (
     <div>
@@ -111,12 +119,12 @@ export function StepExport({ data, onBack }: { data: StudioData; onBack: () => v
                   <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
                 </div>
               </div>
-            ) : quota ? (
+            ) : quotaMsg ? (
               <div className="mt-7 rounded-md border border-gold/50 bg-gold/10 p-4">
                 <p className="flex items-center gap-2 font-semibold">
                   <Zap className="size-4 text-gold" /> {t("Quota insuffisant", "Not enough quota")}
                 </p>
-                <p className="mt-1 text-sm text-foreground/80">{quota}</p>
+                <p className="mt-1 text-sm text-foreground/80">{quotaMsg}</p>
                 <Button asChild className="mt-3">
                   <Link to="/app/billing">
                     {usage.data?.plan === "creator"
@@ -129,7 +137,7 @@ export function StepExport({ data, onBack }: { data: StudioData; onBack: () => v
               </div>
             ) : null}
 
-            <Button size="lg" className="mt-7 h-12 px-6 text-base" disabled={start.isPending || !!watch} onClick={() => start.mutate({ collectionId: data.collection.id })}>
+            <Button size="lg" className="mt-7 h-12 px-6 text-base" disabled={start.isPending || !!watch || !!short} onClick={() => start.mutate({ collectionId: data.collection.id })}>
               {start.isPending || watch ? <Loader2 className="animate-spin" /> : <Rocket />}
               {watch ? t("Export en cours…", "Exporting…") : t("Lancer l'export", "Start export")}
             </Button>
